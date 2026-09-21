@@ -6,8 +6,20 @@ From the project folder:
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+python tests/smoke_test.py
 streamlit run app.py
 ```
 
-The dashboard currently exposes verified price benchmarks and the regulatory-process snapshot.
-It deliberately withholds a composite readiness score until the remaining variables have sourced data.
+The dashboard includes:
+
+- PJM, ERCOT, and MISO evidence inputs
+- configurable balanced, speed-first, cost-first, and reliability-first weights
+- comparative screening scores
+- resource-adequacy and demand-growth indicators
+- a 100–500 MW load scenario
+- annual electricity-cost proxies
+- phased energization
+- large-load process status
+- the primary-source register
+
+The readiness score is a comparative screening output. It is not a guaranteed energization date or a substitute for utility-, transmission-zone-, substation-, tariff-, or point-of-interconnection due diligence.
