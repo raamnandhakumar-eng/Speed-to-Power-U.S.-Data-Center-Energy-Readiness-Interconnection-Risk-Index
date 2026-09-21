@@ -1,0 +1,11 @@
+src/
+tests/
+data/
+paper/
+analysis/
+local_app/
+config/
+*.py
+requirements-*.txt
+CITATION.cff
+TECHNICAL_BRIEF.md
