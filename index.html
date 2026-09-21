@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Speed-to-Power: U.S. Data Center Energy Readiness & Interconnection Risk">
+<title>Speed-to-Power</title>
+<style>
+:root{--bg:#07101d;--panel:#0d1a2b;--panel2:#102238;--text:#e8eef7;--muted:#9eb0c5;--line:#20354e;--accent:#67b7ff;--good:#7ee0a3;--warn:#ffd479}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(180deg,#07101d,#091625 45%,#07101d);color:var(--text);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{max-width:1180px;margin:auto;padding:28px 20px 70px}.hero{padding:30px 0 20px}.kicker{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+h1{font-size:clamp(34px,6vw,66px);line-height:1.02;margin:8px 0 14px;letter-spacing:-.04em}h2{font-size:26px;margin:0 0 14px}h3{font-size:17px;margin:0 0 10px}.lede{max-width:850px;color:var(--muted);font-size:18px}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0}.nav a{color:var(--text);text-decoration:none;border:1px solid var(--line);padding:8px 12px;border-radius:999px;background:#0b1726}
+.section{margin-top:28px;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(13,26,43,.94);box-shadow:0 16px 48px rgba(0,0,0,.18)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px}.metric{font-size:28px;font-weight:800;letter-spacing:-.03em}.label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:14px 0 18px}.control label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}.control input,.control select{width:100%;background:#07111f;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px 8px;vertical-align:top}th{color:var(--muted);font-weight:600}
+.bar{height:8px;background:#07111f;border-radius:999px;overflow:hidden;margin-top:6px}.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--good))}
+.note{color:var(--muted);font-size:13px;margin-top:10px}.warning{padding:12px 14px;border-left:3px solid var(--warn);background:#2a2315;color:#f9e9bd;border-radius:8px;margin-top:14px}
+.footer{color:var(--muted);font-size:12px;margin-top:28px}.pill{display:inline-block;border:1px solid var(--line);padding:4px 8px;border-radius:999px;color:var(--muted);font-size:12px}
+@media(max-width:850px){.grid,.grid4,.controls{grid-template-columns:1fr}.section{padding:18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">Energy infrastructure research</div>
+    <h1>Speed-to-Power</h1>
+    <div class="lede">A multi-layer framework for screening large-load energy readiness, utility economics, transmission development, and Northern Virginia candidate pathways.</div>
+    <div class="nav"><a href="#v4">Candidate Pathways V4</a><a href="#v3">Northern Virginia V3</a><a href="#v2">Utility V2</a><a href="#v1">Regional V1</a></div>
+  </div>
+
+  <section class="section" id="v4">
+    <span class="pill">V4</span><h2>Candidate development pathways</h2>
+    <div class="controls">
+      <div class="control"><label>Scenario campus load (MW)</label><input id="v4load" type="range" min="100" max="500" step="25" value="300"><div id="v4loadval">300 MW</div></div>
+      <div class="control"><label>Target full service year</label><select id="v4year"><option>2026</option><option>2027</option><option>2028</option><option selected>2029</option><option>2030</option><option>2031</option><option>2032</option></select></div>
+      <div class="card"><div class="label">Minimum delivery points</div><div class="metric" id="v4dp">1</div></div>
+    </div>
+    <div id="v4cards" class="grid"></div>
+    <div class="warning">Technical pathway evidence is not spare substation capacity, parcel availability, or a guaranteed energization date. Land-use entitlement is a separate gate.</div>
+    <h3 style="margin-top:20px">Future corridor evidence</h3><div id="v4corridors"></div>
+  </section>
+
+  <section class="section" id="v3">
+    <span class="pill">V3</span><h2>Northern Virginia transmission development</h2>
+    <div id="v3metrics" class="grid4"></div>
+    <h3 style="margin-top:20px">Transmission Development Readiness Index</h3>
+    <div id="v3projects"></div>
+  </section>
+
+  <section class="section" id="v2">
+    <span class="pill">V2</span><h2>Utility-level economics</h2>
+    <div class="controls">
+      <div class="control"><label>Facility load (MW)</label><input id="v2load" type="range" min="100" max="500" step="25" value="300"><div id="v2loadval">300 MW</div></div>
+      <div class="control"><label>Load factor</label><input id="v2lf" type="range" min="0.75" max="1" step="0.01" value="0.90"><div id="v2lfval">90%</div></div>
+      <div class="control"><label>Oncor 4CP exposure</label><input id="v24cp" type="range" min="0.40" max="1" step="0.05" value="0.90"><div id="v24cpval">90%</div></div>
+    </div>
+    <div id="v2cards" class="grid"></div>
+    <div class="note">Oncor and ComEd figures are core delivery proxies. Dominion displays GS-5 contractual exposure rather than an equivalent annual delivery bill.</div>
+  </section>
+
+  <section class="section" id="v1">
+    <span class="pill">V1</span><h2>Regional market screening</h2>
+    <div class="control" style="max-width:340px"><label>Decision profile</label><select id="v1profile"><option>balanced</option><option>speed_first</option><option>cost_first</option><option>reliability_first</option></select></div>
+    <div id="v1markets"></div>
+  </section>
+
+  <div class="footer">Public-source screening model. Evidence is kept separate from non-public capacity and project-specific engineering conclusions.</div>
+</div>
+
+<script>
+const V4_PATHWAYS=[
+ {name:"Twin Creeks campus pathway",cls:"Public campus precedent",load:300,dps:1,latest:"2026-06",tdri:88.5,bridge:30,area:"Eastern Leesburg / Loudoun"},
+ {name:"Sycolin-Starlight campus pathway",cls:"Public campus precedent",load:555,dps:2,latest:"2028-06",tdri:88.5,bridge:0,area:"Eastern Leesburg / Loudoun"},
+ {name:"Lunar-Apollo campus pathway",cls:"Public campus precedent",load:517,dps:2,latest:"2028-03",tdri:88.5,bridge:30,area:"Eastern Leesburg / Loudoun"},
+ {name:"BECO-Firehouse corridor",cls:"Corridor evidence",load:null,dps:1,latest:"2029-03",tdri:60.5,bridge:null,area:"Sterling / Loudoun"},
+ {name:"Global Plaza corridor",cls:"Corridor evidence",load:null,dps:null,latest:"2029-12",tdri:43.5,bridge:null,area:"Sterling / Loudoun"}
+];
+const V3_PROJECTS=[
+ ["Wishing Star-Mars","500/230","Completed / energized",95.5],
+ ["Twin Creeks-Apollo","230","Approved / load-serving buildout",88.5],
+ ["Aspen-Golden","500/230","Approved / pre-construction",79.0],
+ ["Golden-Mars","500/230","Approved",76.0],
+ ["BECO-Firehouse","230","Filed / under SCC review",60.5],
+ ["Morrisville-Wishing Star","500/230","Filed / under SCC review",56.0],
+ ["Global Plaza Extension","230","Pre-filed / public outreach",43.5],
+ ["Commonwealth Energy Express","HVDC","Proposed / early development",34.5]
+];
+const V1={
+ balanced:[["ERCOT",85.0,100,100,100],["PJM",41.39,23.2,32.9,60],["MISO",37.79,26.5,0,50]],
+ speed_first:[["ERCOT",90.0,100,100,100],["PJM",47.89,23.2,32.9,60],["MISO",41.64,26.5,0,50]],
+ cost_first:[["ERCOT",90.0,100,100,100],["PJM",39.76,23.2,32.9,60],["MISO",28.14,26.5,0,50]],
+ reliability_first:[["ERCOT",85.0,100,100,100],["MISO",38.6,26.5,0,50],["PJM",36.74,23.2,32.9,60]]
+};
+const fmtM=n=>'$'+(n/1e6).toFixed(2)+'M';
+const pct=n=>Math.round(n*100)+'%';
+const num=n=>Number(n).toLocaleString(undefined,{maximumFractionDigits:1});
+const minDP=load=>Math.ceil(load/300);
+function scheduleScore(latest,target){const y=parseInt(latest.slice(0,4));return y<=target?100:y===target+1?60:20}
+function pathwayScore(p,load,target){
+ if(p.load==null||p.dps==null)return null;
+ const lf=Math.min(100,p.load/load*100), df=Math.min(100,p.dps/minDP(load)*100), ss=scheduleScore(p.latest,target), br=Math.min(100,(p.bridge||0)/load*100), ec=100;
+ return .30*lf+.15*df+.25*p.tdri+.20*ss+.05*br+.05*ec;
+}
+function renderV4(){
+ const load=+document.getElementById('v4load').value,target=+document.getElementById('v4year').value;
+ document.getElementById('v4loadval').textContent=load+' MW';document.getElementById('v4dp').textContent=minDP(load);
+ const scored=V4_PATHWAYS.map(p=>({...p,score:pathwayScore(p,load,target)}));
+ const precedents=scored.filter(x=>x.score!==null).sort((a,b)=>b.score-a.score);
+ document.getElementById('v4cards').innerHTML=precedents.map(x=>`<div class="card"><div class="label">${x.name}</div><div class="metric">${x.score.toFixed(1)}</div><div class="bar"><span style="width:${x.score}%"></span></div><div class="note">${num(x.load)} MW documented · ${x.dps} DP · target ${x.latest}</div></div>`).join('');
+ const corridors=scored.filter(x=>x.score===null);
+ document.getElementById('v4corridors').innerHTML='<table><tr><th>Corridor</th><th>Area</th><th>Target</th><th>TDRI</th></tr>'+corridors.map(x=>`<tr><td>${x.name}</td><td>${x.area}</td><td>${x.latest||'—'}</td><td>${x.tdri||'—'}</td></tr>`).join('')+'</table>';
+}
+function renderV3(){
+ const metrics=[["Queue with dates","25,000 MW"],["In study batches","45,000 MW"],["Total advancing","70,000 MW"],["Zone peak cited","24,678 MW"]];
+ document.getElementById('v3metrics').innerHTML=metrics.map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="metric">${x[1]}</div></div>`).join('');
+ document.getElementById('v3projects').innerHTML='<table><tr><th>Project</th><th>Voltage</th><th>Stage</th><th>TDRI</th></tr>'+V3_PROJECTS.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td>${x[3]}</td></tr>`).join('')+'</table>';
+}
+function renderV2(){
+ const load=+document.getElementById('v2load').value,lf=+document.getElementById('v2lf').value,cp=+document.getElementById('v24cp').value;
+ document.getElementById('v2loadval').textContent=load+' MW';document.getElementById('v2lfval').textContent=pct(lf);document.getElementById('v24cpval').textContent=pct(cp);
+ const kw=load*1000, annualMWh=load*lf*8760;
+ const oncor=((258.80+321.63+0.331004*kw+3.491759*(kw*cp)-0.182495*kw)*12);
+ const comed=((719.73+32+(0.51+2.65)*kw)*12)+(0.00124*(kw*lf*8760));
+ const collateral=load*1500000;
+ document.getElementById('v2cards').innerHTML=`
+ <div class="card"><div class="label">Oncor / ERCOT</div><div class="metric">${fmtM(oncor)}/yr</div><div class="note">Core delivery proxy · $${(oncor/annualMWh).toFixed(2)}/MWh</div></div>
+ <div class="card"><div class="label">ComEd / PJM</div><div class="metric">${fmtM(comed)}/yr</div><div class="note">Core delivery proxy · $${(comed/annualMWh).toFixed(2)}/MWh</div></div>
+ <div class="card"><div class="label">Dominion / PJM</div><div class="metric">${fmtM(collateral)}</div><div class="note">Gross GS-5 collateral benchmark · ${num(load*.85)} MW transmission floor</div></div>`;
+}
+function renderV1(){
+ const rows=V1[document.getElementById('v1profile').value];
+ document.getElementById('v1markets').innerHTML='<table><tr><th>Market</th><th>Score</th><th>Resource adequacy</th><th>Cost proxy</th><th>Process maturity</th></tr>'+rows.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td>${x[3]}</td><td>${x[4]}</td></tr>`).join('')+'</table>';
+}
+['v4load','v4year'].forEach(id=>document.getElementById(id).addEventListener('input',renderV4));
+['v2load','v2lf','v24cp'].forEach(id=>document.getElementById(id).addEventListener('input',renderV2));
+document.getElementById('v1profile').addEventListener('change',renderV1);
+renderV4();renderV3();renderV2();renderV1();
+</script>
+</body>
+</html>
