@@ -23,3 +23,5 @@ jobs:
         run: python tests/utility_v2_smoke_test.py
       - name: Run V3 Northern Virginia smoke test
         run: python tests/nova_v3_smoke_test.py
+      - name: Run V4 candidate-pathway smoke test
+        run: python tests/site_pathway_v4_smoke_test.py
