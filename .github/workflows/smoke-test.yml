@@ -25,5 +25,5 @@ jobs:
         run: python tests/nova_v3_smoke_test.py
       - name: Run V4 candidate-pathway smoke test
         run: python tests/site_pathway_v4_smoke_test.py
-      - name: Run Vercel FastAPI entrypoint smoke test
+      - name: Run Vercel static dashboard smoke test
         run: python tests/vercel_app_smoke_test.py
