@@ -1,0 +1,17 @@
+utility,component,2026_rate,unit,billing_basis,included_in_v2_proxy,notes
+Oncor Electric Delivery,Customer Charge,258.80,$/month,per retail customer,Yes,Transmission Service tariff effective June 1 2026
+Oncor Electric Delivery,Metering Charge,321.63,$/month,per retail customer,Yes,Transmission Service tariff effective June 1 2026
+Oncor Electric Delivery,Distribution System Charge,0.331004,$/kW-month,distribution-system billing kW,Yes,Transmission Service tariff effective June 1 2026
+Oncor Electric Delivery,TCRF,3.491759,$/4CP-kW-month,ERCOT 4CP billing kW,Yes,Effective August 1 2026
+Oncor Electric Delivery,Interim Surcharge,-0.182495,$/kW-month,distribution-system billing kW,Yes,Effective August 1 2026 through December 2026
+Oncor Electric Delivery,Other riders,,various,various,No,"EECRF, RCE and other applicable riders excluded from core proxy"
+Commonwealth Edison,Customer Charge,719.73,$/month,per customer,Yes,2026 High Voltage Delivery Class
+Commonwealth Edison,Standard Metering Service Charge,32.00,$/month,per customer,Yes,2026 High Voltage Delivery Class
+Commonwealth Edison,HV Distribution Facilities Charge >10 MW,0.51,$/kW-month,monthly kilowatt demand,Yes,Unadjusted 2026 published amount
+Commonwealth Edison,HV Transformer Charge >10 MW,2.65,$/kW-month,monthly kilowatt demand,Yes,Unadjusted 2026 published amount
+Commonwealth Edison,Illinois Electricity Distribution Tax,0.00124,$/kWh,energy delivered,Yes,Unadjusted 2026 published amount
+Commonwealth Edison,ADJ factors,,various,various,No,Published tariff values are stated as rate plus ADJ; adjustments excluded from core proxy
+Dominion Energy Virginia,GS-5 collateral requirement,1500000,$/MW,contracted capacity,No,Separate from annual energy/delivery bill
+Dominion Energy Virginia,GS-5 distribution minimum,85,percent of contracted demand,minimum billed demand,No,Effective January 1 2027
+Dominion Energy Virginia,GS-5 transmission minimum,85,percent of contracted demand,minimum billed demand,No,Effective January 1 2027
+Dominion Energy Virginia,GS-5 generation minimum,60,percent of contracted demand,minimum billed demand,No,PJM capacity expense excluded from minimum generation demand charge
