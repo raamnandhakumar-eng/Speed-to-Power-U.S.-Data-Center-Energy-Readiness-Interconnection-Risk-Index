@@ -1,4 +1,4 @@
-name: Smoke Test
+name: Smoke Tests
 
 on:
   push:
@@ -17,5 +17,7 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Run evidence-model smoke test
+      - name: Run V1 evidence-model smoke test
         run: python tests/smoke_test.py
+      - name: Run V2 utility-model smoke test
+        run: python tests/utility_v2_smoke_test.py
