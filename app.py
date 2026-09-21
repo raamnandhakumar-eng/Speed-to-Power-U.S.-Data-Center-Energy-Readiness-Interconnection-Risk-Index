@@ -22,6 +22,10 @@ from src.nova_readiness_v3 import (
     queue_scenario,
     verify_project_scores,
 )
+from src.site_pathway_v4 import (
+    required_delivery_points as v4_required_delivery_points,
+    score_pathways,
+)
 
 ROOT = Path(__file__).resolve().parent
 
@@ -29,9 +33,161 @@ st.set_page_config(page_title="Speed-to-Power", layout="wide")
 st.title("Speed-to-Power")
 st.caption("U.S. Data Center Energy Readiness & Interconnection Risk")
 
-tab_v3, tab_v2, tab_v1, tab_method = st.tabs(
-    ["Northern Virginia V3", "Utility V2", "Regional V1", "Methodology & Sources"]
+tab_v4, tab_v3, tab_v2, tab_v1, tab_method = st.tabs(
+    [
+        "Candidate Pathways V4",
+        "Northern Virginia V3",
+        "Utility V2",
+        "Regional V1",
+        "Methodology & Sources",
+    ]
 )
+
+with tab_v4:
+    st.subheader("Northern Virginia candidate development pathways")
+    st.write(
+        "V4 compares public development precedents and future transmission corridors. "
+        "The technical score is calculated only where public sources document load, "
+        "delivery-point architecture, schedule, and a direct transmission dependency. "
+        "It does not identify an available parcel or unused grid capacity."
+    )
+
+    v4c1, v4c2 = st.columns(2)
+    v4_load = v4c1.slider(
+        "Scenario campus load (MW)",
+        100,
+        500,
+        300,
+        step=25,
+        key="v4_load",
+    )
+    v4_target_year = v4c2.slider(
+        "Target full service year",
+        2026,
+        2032,
+        2029,
+        key="v4_target_year",
+    )
+
+    scored_v4 = score_pathways(v4_load, v4_target_year)
+    scored_precedents = scored_v4[
+        scored_v4["technical_pathway_score"].notna()
+    ].sort_values("technical_pathway_score", ascending=False)
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Scenario load", f"{v4_load} MW")
+    m2.metric(
+        "Minimum delivery points",
+        v4_required_delivery_points(v4_load),
+    )
+    m3.metric("Target year", str(v4_target_year))
+
+    st.markdown("### Public campus precedents")
+    precedent_display = scored_precedents[
+        [
+            "pathway_name",
+            "documented_load_mw",
+            "documented_delivery_points",
+            "latest_target",
+            "direct_project_tdri",
+            "technical_pathway_score",
+            "land_use_status",
+        ]
+    ].rename(
+        columns={
+            "pathway_name": "Pathway",
+            "documented_load_mw": "Documented load (MW)",
+            "documented_delivery_points": "Delivery points",
+            "latest_target": "Latest filing-era target",
+            "direct_project_tdri": "Direct project TDRI",
+            "technical_pathway_score": "Technical pathway evidence score",
+            "land_use_status": "Parcel land-use status",
+        }
+    )
+    st.dataframe(
+        precedent_display.round(1),
+        use_container_width=True,
+        hide_index=True,
+    )
+    st.bar_chart(
+        scored_precedents.set_index("pathway_name")["technical_pathway_score"]
+    )
+
+    st.caption(
+        "The score is a scenario-fit measure for public precedents, not a recommendation "
+        "or a claim that these campuses are available to another customer."
+    )
+
+    st.markdown("### Scenario decomposition")
+    score_components = scored_precedents[
+        [
+            "pathway_name",
+            "load_fit_score",
+            "delivery_point_fit_score",
+            "direct_project_tdri",
+            "schedule_alignment_score",
+            "bridge_ratio_score",
+            "evidence_completeness_score",
+        ]
+    ].rename(
+        columns={
+            "pathway_name": "Pathway",
+            "load_fit_score": "Load fit",
+            "delivery_point_fit_score": "DP fit",
+            "direct_project_tdri": "Transmission maturity",
+            "schedule_alignment_score": "Schedule alignment",
+            "bridge_ratio_score": "Bridge ratio",
+            "evidence_completeness_score": "Evidence completeness",
+        }
+    )
+    st.dataframe(score_components.round(1), use_container_width=True, hide_index=True)
+
+    st.markdown("### Future corridor evidence")
+    corridor_display = scored_v4[
+        scored_v4["technical_pathway_score"].isna()
+    ][
+        [
+            "pathway_name",
+            "area_context",
+            "serving_substations",
+            "latest_target",
+            "direct_project_tdri",
+            "land_use_note",
+        ]
+    ].rename(
+        columns={
+            "pathway_name": "Corridor",
+            "area_context": "Area",
+            "serving_substations": "Substation evidence",
+            "latest_target": "Target",
+            "direct_project_tdri": "Transmission maturity",
+            "land_use_note": "Why no site score",
+        }
+    )
+    st.dataframe(corridor_display, use_container_width=True, hide_index=True)
+
+    st.markdown("### Land-use gate")
+    landuse = pd.read_csv(ROOT / "data" / "loudoun_landuse_v4.csv")
+    st.dataframe(
+        landuse[
+            ["topic", "status_or_rule", "effective_or_as_of", "planning_implication"]
+        ].rename(
+            columns={
+                "topic": "Topic",
+                "status_or_rule": "Current rule / status",
+                "effective_or_as_of": "Effective / as of",
+                "planning_implication": "Planning implication",
+            }
+        ),
+        use_container_width=True,
+        hide_index=True,
+    )
+    st.warning(
+        "As of September 21, 2026, Loudoun's Board had approved a plan to pause "
+        "final votes on legislative data-center and substation applications, but the "
+        "implementing resolution was scheduled for October 20, 2026. V4 treats this "
+        "as elevated entitlement-timing risk rather than a parcel-specific denial."
+    )
 
 with tab_v3:
     st.subheader("Northern Virginia transmission development readiness")
