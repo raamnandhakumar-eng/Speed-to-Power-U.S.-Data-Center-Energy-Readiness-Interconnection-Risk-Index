@@ -16,6 +16,12 @@ from src.utility_model_v2 import (
     dominion_gs5_obligations,
     oncor_transmission_core_delivery_proxy,
 )
+from src.nova_readiness_v3 import (
+    load_nodes,
+    load_projects,
+    queue_scenario,
+    verify_project_scores,
+)
 
 ROOT = Path(__file__).resolve().parent
 
@@ -23,9 +29,145 @@ st.set_page_config(page_title="Speed-to-Power", layout="wide")
 st.title("Speed-to-Power")
 st.caption("U.S. Data Center Energy Readiness & Interconnection Risk")
 
-tab_v2, tab_v1, tab_method = st.tabs(
-    ["Utility V2", "Regional V1", "Methodology & Sources"]
+tab_v3, tab_v2, tab_v1, tab_method = st.tabs(
+    ["Northern Virginia V3", "Utility V2", "Regional V1", "Methodology & Sources"]
 )
+
+with tab_v3:
+    st.subheader("Northern Virginia transmission development readiness")
+    st.write(
+        "V3 moves from utility-level economics to documented transmission projects, "
+        "delivery-point queue rules, and load-serving substations. The index measures "
+        "development maturity. It does not estimate spare substation capacity or guarantee "
+        "an energization date."
+    )
+
+    v3_load = st.slider(
+        "Hypothetical campus load (MW)",
+        100,
+        500,
+        300,
+        step=25,
+        key="v3_load",
+    )
+    q = queue_scenario(v3_load)
+
+    q1, q2, q3, q4 = st.columns(4)
+    q1.metric("Scenario load", f"{v3_load} MW")
+    q2.metric("Minimum delivery points", q["minimum_delivery_points"])
+    q3.metric("DP request cap", f"{q['delivery_point_cap_mw']:.0f} MW")
+    q4.metric("Formal queue threshold", "~100 MW")
+
+    if v3_load > q["delivery_point_cap_mw"]:
+        st.info(
+            f"A {v3_load} MW campus requires at least "
+            f"{q['minimum_delivery_points']} delivery-point requests under the "
+            "public 300 MW cap. Campus-style requests may be aligned and staged "
+            "based on demonstrated load ramp-up."
+        )
+
+    st.markdown("### Queue pressure")
+    queue_df = pd.read_csv(ROOT / "data" / "nova_queue_rules_v3.csv")
+    queue_metrics = pd.DataFrame(
+        [
+            ["Requests with projected connection dates", "25,000 MW"],
+            ["Additional requests in study batches", "45,000 MW"],
+            ["Total advancing through queue", "70,000 MW"],
+            ["Dominion Zone peak cited in filing", "24,678 MW"],
+            ["New request pace", "~10 requests/month"],
+            ["Associated new requested load", "~2,000–3,000 MW/month"],
+        ],
+        columns=["Public queue metric", "Value"],
+    )
+    st.dataframe(queue_metrics, use_container_width=True, hide_index=True)
+    st.caption(
+        "Queue MW are requested load, not a forecast of realized demand or available capacity."
+    )
+
+    st.markdown("### Load-serving substation evidence")
+    nodes = load_nodes()
+    node_display = nodes[
+        [
+            "campus",
+            "substation",
+            "dp_requested_load_mw",
+            "target_in_service",
+            "bridging_power",
+            "bridge_source",
+            "bridge_capacity_mva",
+            "status_note",
+        ]
+    ].rename(
+        columns={
+            "campus": "Campus",
+            "substation": "Substation",
+            "dp_requested_load_mw": "Requested load (MW)",
+            "target_in_service": "Filing-era target in service",
+            "bridging_power": "Bridging power",
+            "bridge_source": "Bridge source",
+            "bridge_capacity_mva": "Bridge capacity (MVA)",
+            "status_note": "Evidence note",
+        }
+    )
+    st.dataframe(node_display, use_container_width=True, hide_index=True)
+    st.metric(
+        "Total requested ten-year load in the five-node filing",
+        f"{nodes['dp_requested_load_mw'].sum():,.0f} MW",
+    )
+
+    st.markdown("### Transmission Development Readiness Index")
+    projects = verify_project_scores().sort_values("tdri_score", ascending=False)
+    project_display = projects[
+        [
+            "project",
+            "voltage_kv",
+            "development_stage",
+            "regulatory_status",
+            "target_or_actual_in_service",
+            "tdri_score",
+        ]
+    ].rename(
+        columns={
+            "project": "Project",
+            "voltage_kv": "Voltage",
+            "development_stage": "Development stage",
+            "regulatory_status": "Regulatory status",
+            "target_or_actual_in_service": "Target / actual in service",
+            "tdri_score": "TDRI",
+        }
+    )
+    st.dataframe(project_display, use_container_width=True, hide_index=True)
+    st.bar_chart(projects.set_index("project")["tdri_score"])
+
+    st.caption(
+        "TDRI = 40% development stage + 30% regulatory maturity + "
+        "15% schedule specificity + 15% explicit load linkage. "
+        "It is a documented-maturity index, not a capacity score."
+    )
+
+    st.markdown("### Queue advancement requirements")
+    advancement = pd.DataFrame(
+        [
+            ["Project Initiation", "Load characteristics, voltage/timing requirements, site information, preliminary engineering"],
+            ["Initial viability", "Sufficient land, constructible interconnection routes, acceptable environmental conditions"],
+            ["Project Feasibility", "Zoning conformance letter and 30% engineering site plan"],
+            ["Project Development", "Required permits, 100% grading plan, construction one-line diagram"],
+            ["Project Execution", "Final design, construction, energization, as-built and operating documentation"],
+        ],
+        columns=["Stage", "Publicly documented requirement"],
+    )
+    st.dataframe(advancement, use_container_width=True, hide_index=True)
+
+    st.markdown("### Geographic evidence")
+    st.write(
+        "V3 uses Dominion's published project maps as the authoritative geographic layer. "
+        "Exact asset coordinates are not reconstructed from visual maps because that would "
+        "create false precision."
+    )
+    st.link_button(
+        "Open Dominion Loudoun reliability project map",
+        "https://www.dominionenergy.com/-/media/content/about/power-line-projects/nova/pdfs/maps/loudoun-reliability-projects-overview-january-2025-open-house.pdf",
+    )
 
 with tab_v2:
     st.subheader("Utility-level due diligence")
