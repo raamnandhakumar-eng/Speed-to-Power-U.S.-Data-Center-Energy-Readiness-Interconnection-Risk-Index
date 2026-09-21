@@ -212,7 +212,8 @@ hyperscale scenario.
 - `src/site_pathway_v4.py` — scenario-specific candidate-pathway model
 - `src/nova_readiness_v3.py` — Northern Virginia transmission-development model
 - `src/utility_model_v2.py` — utility tariff and contractual-exposure model
-- `app.py` — interactive V1–V4 dashboard
+- `index.html` — static Vercel V1–V4 dashboard
+- `streamlit_app.py` — local Python/Streamlit V1–V4 dashboard
 
 ## Run the dashboard
 
@@ -304,7 +305,7 @@ Commerce Commission.
 
 The repository supports two frontends:
 
-- **Vercel:** `app.py` is a FastAPI application with a top-level `app` entrypoint and browser-based V1–V4 dashboard.
-- **Local Streamlit:** `streamlit_app.py` preserves the full Streamlit analysis interface.
+- **Vercel:** `index.html` is a static browser-based V1–V4 dashboard. It requires no Python serverless runtime.
+- **Local Streamlit:** `streamlit_app.py` preserves the full Python/Streamlit analysis interface.
 
-Vercel installs `requirements.txt`. For the local Streamlit interface, install `requirements-streamlit.txt`.
+The static Vercel site performs the published scenario calculations in the browser. The Python models and tests remain the analytical reference implementation.
