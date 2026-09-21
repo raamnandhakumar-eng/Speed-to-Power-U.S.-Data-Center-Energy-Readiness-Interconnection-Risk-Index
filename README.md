@@ -98,7 +98,7 @@ hyperscale scenario.
 
 - `paper/draft_v2.md` — complete V2 working paper
 - `analysis/utility_v2_findings.md` — concise utility-level findings
-- `INTERVIEW_BRIEF.md` — 30-second and 60-second project explanations
+- `TECHNICAL_BRIEF.md` — concise technical summary, assumptions, findings, and limitations
 - `data/utility_sources_v2.csv` — primary-source audit trail
 - `src/utility_model_v2.py` — utility tariff and contractual-exposure model
 - `app.py` — interactive V1 + V2 dashboard
