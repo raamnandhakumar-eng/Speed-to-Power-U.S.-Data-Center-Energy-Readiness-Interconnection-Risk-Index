@@ -1,0 +1,4 @@
+market,representative_state,industrial_price_cents_per_kwh,scenario_load_mw,load_factor,annual_energy_mwh,annual_energy_twh,annual_cost_proxy_usd,annual_cost_proxy_musd
+PJM,Virginia,9.31,300,0.9,2365200.0,2.3652,220200120.0,220.20012
+ERCOT,Texas,6.58,300,0.9,2365200.0,2.3652,155630160.0,155.63016
+MISO,Illinois,10.65,300,0.9,2365200.0,2.3652,251893800.0,251.8938
