@@ -1,0 +1,4 @@
+market,representative_state,state_code,industrial_price_cents_per_kwh,price_period,source,caveat
+PJM,Virginia,VA,9.31,2026-06,EIA Electric Power Monthly Table 5.6.A,State industrial retail price is only a screening proxy; hyperscale negotiated service can differ.
+ERCOT,Texas,TX,6.58,2026-06,EIA Electric Power Monthly Table 5.6.A,State industrial retail price is only a screening proxy; ERCOT market exposure and utility tariffs require separate modeling.
+MISO,Illinois,IL,10.65,2026-06,EIA Electric Power Monthly Table 5.6.A,Representative-state proxy for MVP; MISO spans multiple states and utility territories.
