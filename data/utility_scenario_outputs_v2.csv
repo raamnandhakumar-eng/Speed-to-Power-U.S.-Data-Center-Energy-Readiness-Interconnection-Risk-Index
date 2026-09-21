@@ -1,0 +1,4 @@
+load_mw,load_factor,oncor_four_cp_factor,oncor_core_delivery_proxy_usd_per_year,oncor_core_delivery_proxy_usd_per_mwh,comed_core_delivery_proxy_usd_per_year,comed_core_delivery_proxy_usd_per_mwh,dominion_gs5_gross_collateral_usd,dominion_gs5_collateral_after_max_credit_reduction_usd,dominion_min_distribution_demand_mw,dominion_min_transmission_demand_mw,dominion_min_generation_demand_mw
+100,0.9,0.9,3956275.68,5.0181,4778636.76,6.0612,150000000,45000000,85,85,60
+300,0.9,0.9,11854896.72,5.0122,14317868.76,6.0536,450000000,135000000,255,255,180
+500,0.9,0.9,19753517.76,5.0110,23857100.76,6.0520,750000000,225000000,425,425,300
