@@ -1,0 +1,6 @@
+campus,substation,dp_requested_load_mw,dp_requested_isd,ramp_start_year,target_in_service,bridging_power,bridge_source,bridge_capacity_mva,source_id,status_note
+A,Twin Creeks,300,2024-12,2025,2026-06,Yes,Pleasant View Substation,30,TWIN_CREEKS_APOLLO_APP_2024,"Target in-service date from 2024 filing; current operational status not independently verified in V3"
+B,Sycolin Creek,300,2023-10,2026,2026-09,No,,,TWIN_CREEKS_APOLLO_APP_2024,"Customer B was informed no bridging power would be available"
+B,Starlight,255,2028-06,2028,2028-06,No,,,TWIN_CREEKS_APOLLO_APP_2024,"Target in-service date from 2024 filing"
+C,Lunar,278,2026-08,2026,2028-02,Yes,Edwards Ferry Substation,30,TWIN_CREEKS_APOLLO_APP_2024,"Target in-service date from 2024 filing"
+C,Apollo,239,2027-01,2027,2028-03,Yes,Edwards Ferry Substation,30,TWIN_CREEKS_APOLLO_APP_2024,"Target in-service date from 2024 filing"
