@@ -1,13 +1,13 @@
-from app import app
+from pathlib import Path
 
-assert app.title == "Speed-to-Power"
-paths = {route.path for route in app.routes}
+root = Path(__file__).resolve().parents[1]
+html = (root / "index.html").read_text()
 
-assert "/" in paths
-assert "/api/health" in paths
-assert "/api/v1" in paths
-assert "/api/v2" in paths
-assert "/api/v3" in paths
-assert "/api/v4" in paths
+assert "<title>Speed-to-Power</title>" in html
+assert "Candidate Pathways V4" in html
+assert "Northern Virginia transmission development" in html
+assert "Utility-level economics" in html
+assert "Regional market screening" in html
+assert "renderV4()" in html
 
-print("Vercel FastAPI entrypoint check passed.")
+print("Vercel static dashboard check passed.")
