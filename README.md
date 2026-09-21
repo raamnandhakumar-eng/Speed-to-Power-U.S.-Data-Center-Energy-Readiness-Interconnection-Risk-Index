@@ -213,7 +213,7 @@ hyperscale scenario.
 - `src/nova_readiness_v3.py` — Northern Virginia transmission-development model
 - `src/utility_model_v2.py` — utility tariff and contractual-exposure model
 - `index.html` — static Vercel V1–V4 dashboard
-- `streamlit_app.py` — local Python/Streamlit V1–V4 dashboard
+- `local_app/streamlit_app.py` — local Python/Streamlit V1–V4 dashboard
 
 ## Run the dashboard
 
@@ -225,7 +225,7 @@ python tests/smoke_test.py
 python tests/utility_v2_smoke_test.py
 python tests/nova_v3_smoke_test.py
 python tests/site_pathway_v4_smoke_test.py
-streamlit run streamlit_app.py
+streamlit run local_app/streamlit_app.py
 ```
 
 ## Repository structure
@@ -306,6 +306,6 @@ Commerce Commission.
 The repository supports two frontends:
 
 - **Vercel:** `index.html` is a static browser-based V1–V4 dashboard. It requires no Python serverless runtime.
-- **Local Streamlit:** `streamlit_app.py` preserves the full Python/Streamlit analysis interface.
+- **Local Streamlit:** `local_app/streamlit_app.py` preserves the full Python/Streamlit analysis interface.
 
 The static Vercel site performs the published scenario calculations in the browser. The Python models and tests remain the analytical reference implementation.
