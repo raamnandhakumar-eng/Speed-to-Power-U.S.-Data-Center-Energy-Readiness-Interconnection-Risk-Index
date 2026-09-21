@@ -1,0 +1,9 @@
+{
+  "interconnection_readiness": 0.3,
+  "power_availability": 0.2,
+  "energy_cost": 0.15,
+  "reliability": 0.1,
+  "generation_pipeline": 0.1,
+  "tariff_regulatory_readiness": 0.1,
+  "clean_energy_access": 0.05
+}
