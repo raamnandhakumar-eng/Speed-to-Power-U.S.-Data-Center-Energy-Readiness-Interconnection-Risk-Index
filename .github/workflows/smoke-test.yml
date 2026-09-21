@@ -21,3 +21,5 @@ jobs:
         run: python tests/smoke_test.py
       - name: Run V2 utility-model smoke test
         run: python tests/utility_v2_smoke_test.py
+      - name: Run V3 Northern Virginia smoke test
+        run: python tests/nova_v3_smoke_test.py
