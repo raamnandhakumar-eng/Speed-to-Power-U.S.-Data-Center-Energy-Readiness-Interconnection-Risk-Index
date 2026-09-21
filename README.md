@@ -2,16 +2,59 @@
 
 ## U.S. Data Center Energy Readiness & Interconnection Risk
 
-**Version:** Utility V2  
+**Version:** Northern Virginia V3  
 **Updated:** September 21, 2026
 
 Speed-to-Power is a reproducible screening framework for evaluating the energy
 and grid-readiness of 100–500 MW U.S. data-center loads.
 
-The project now has two layers:
+The project now has three analytical layers:
 
 1. **Regional V1:** PJM vs ERCOT vs MISO
 2. **Utility V2:** Dominion Energy Virginia vs Oncor Electric Delivery vs Commonwealth Edison
+3. **Northern Virginia V3:** transmission projects, load-serving substations, and Dominion large-load queue mechanics
+
+## V3 research question
+
+How do transmission-project maturity, queue rules, site-readiness requirements,
+documented load commitments, and infrastructure sequencing shape the plausible
+path to power for 100–500 MW data-center loads in Northern Virginia?
+
+## V3 evidence snapshot
+
+Dominion's February 2026 large-load queue filing reports:
+
+- approximately **25 GW** with projected connection dates through 2031
+- approximately **45 GW** more assigned to study batches
+- approximately **70 GW** total advancing through the queue
+- an approximately **100 MW** threshold for the formal large-load process
+- a **300 MW cap per delivery-point request**
+- four queue stages from Project Initiation through Project Execution
+
+A 2024 transmission filing identifies five load-serving substations totaling
+**1,372 MW** of requested ten-year load:
+
+| Substation | Requested load | Filing-era target | Bridging power |
+|---|---:|---|---|
+| Twin Creeks | 300 MW | June 2026 | Pleasant View, 30 MVA |
+| Sycolin Creek | 300 MW | September 2026 | None |
+| Starlight | 255 MW | June 2028 | None |
+| Lunar | 278 MW | February 2028 | Edwards Ferry, 30 MVA |
+| Apollo | 239 MW | March 2028 | Edwards Ferry, 30 MVA |
+
+These values are public filing evidence, not guarantees of current available capacity.
+
+### Transmission Development Readiness Index
+
+V3 adds a documented-maturity index:
+
+- 40% development stage
+- 30% regulatory maturity
+- 15% schedule specificity
+- 15% explicit load linkage
+
+The index does **not** estimate unused substation MW, power-flow capability, or
+a guaranteed energization date.
 
 ## V2 research question
 
@@ -96,10 +139,14 @@ hyperscale scenario.
 
 ## Key files
 
-- `paper/draft_v2.md` — complete V2 working paper
-- `analysis/utility_v2_findings.md` — concise utility-level findings
+- `paper/draft_v3.md` — Northern Virginia V3 working paper
+- `paper/draft_v2.md` — utility-level V2 working paper
+- `analysis/nova_v3_findings.md` — Northern Virginia transmission findings
+- `analysis/utility_v2_findings.md` — utility-level V2 findings
 - `TECHNICAL_BRIEF.md` — concise technical summary, assumptions, findings, and limitations
-- `data/utility_sources_v2.csv` — primary-source audit trail
+- `data/utility_sources_v2.csv`
+- `data/nova_sources_v3.csv` — primary-source audit trail
+- `src/nova_readiness_v3.py` — Northern Virginia transmission-development model
 - `src/utility_model_v2.py` — utility tariff and contractual-exposure model
 - `app.py` — interactive V1 + V2 dashboard
 
@@ -111,6 +158,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 python tests/smoke_test.py
 python tests/utility_v2_smoke_test.py
+python tests/nova_v3_smoke_test.py
 streamlit run app.py
 ```
 
@@ -124,7 +172,8 @@ streamlit run app.py
 ├── research_questions.md
 ├── analysis/
 │   ├── results_v1.md
-│   └── utility_v2_findings.md
+│   ├── utility_v2_findings.md
+│   └── nova_v3_findings.md
 ├── config/
 │   ├── scenario_weights.json
 │   ├── scoring_rubric.md
@@ -136,19 +185,26 @@ streamlit run app.py
 │   ├── utility_rate_components_v2.csv
 │   ├── utility_scenario_outputs_v2.csv
 │   ├── utility_sources_v2.csv
-│   └── source_register.csv
+│   ├── source_register.csv
+│   ├── nova_load_nodes_v3.csv
+│   ├── nova_transmission_projects_v3.csv
+│   ├── nova_queue_rules_v3.csv
+│   └── nova_sources_v3.csv
 ├── paper/
 │   ├── draft_v1.md
 │   ├── outline.md
-│   └── v2_utility_layer.md
+│   ├── v2_utility_layer.md
+│   └── draft_v3.md
 ├── src/
 │   ├── evidence_model.py
 │   ├── scoring_engine.py
 │   ├── scenarios.py
-│   └── utility_model_v2.py
+│   ├── utility_model_v2.py
+│   └── nova_readiness_v3.py
 └── tests/
     ├── smoke_test.py
-    └── utility_v2_smoke_test.py
+    ├── utility_v2_smoke_test.py
+    └── nova_v3_smoke_test.py
 ```
 
 ## Interpretation rule
