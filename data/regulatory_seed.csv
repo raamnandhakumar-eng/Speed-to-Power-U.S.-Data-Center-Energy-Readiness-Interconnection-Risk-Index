@@ -1,0 +1,4 @@
+market,large_load_threshold_mw,status,notes,source
+PJM,50,documented / evolving,PJM Board used 50 MW at a single POI as the proposed large-load-addition definition in Jan. 2026; FERC opened a PJM show-cause proceeding in June 2026.,https://www.pjm.com/-/media/DotCom/documents/ferc/filings/2026/20260120-el25-49-000.pdf
+ERCOT,75,effective transitional process,"ERCOT Batch Zero applies to eligible large loads of 75 MW or greater; PGRR145 became effective July 11, 2026.",https://www.ercot.com/services/rq/large-load-integration
+MISO,50,proposal under development,MISO stakeholder materials describe a proposed Large Load Project Review and a proposed 50 MW large-load threshold; proposal status must be preserved.,https://www.misoenergy.org/engage/stakeholder-feedback/2026/llwg-large-load-application-and-study-process-llwg-2026-7-20260827/
