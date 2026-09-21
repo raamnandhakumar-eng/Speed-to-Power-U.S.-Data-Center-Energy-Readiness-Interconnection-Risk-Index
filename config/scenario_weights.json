@@ -1,0 +1,30 @@
+{
+  "balanced": {
+    "resource_adequacy_score": 0.35,
+    "cost_score": 0.2,
+    "growth_pressure_score": 0.15,
+    "large_load_process_maturity_score": 0.15,
+    "flexibility_maturity_score": 0.15
+  },
+  "speed_first": {
+    "resource_adequacy_score": 0.25,
+    "cost_score": 0.1,
+    "growth_pressure_score": 0.1,
+    "large_load_process_maturity_score": 0.3,
+    "flexibility_maturity_score": 0.25
+  },
+  "cost_first": {
+    "resource_adequacy_score": 0.25,
+    "cost_score": 0.4,
+    "growth_pressure_score": 0.1,
+    "large_load_process_maturity_score": 0.15,
+    "flexibility_maturity_score": 0.1
+  },
+  "reliability_first": {
+    "resource_adequacy_score": 0.55,
+    "cost_score": 0.1,
+    "growth_pressure_score": 0.15,
+    "large_load_process_maturity_score": 0.1,
+    "flexibility_maturity_score": 0.1
+  }
+}
