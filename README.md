@@ -2,66 +2,120 @@
 
 ## U.S. Data Center Energy Readiness & Interconnection Risk
 
-**Version:** Evidence v1  
+**Version:** Utility V2  
 **Updated:** September 21, 2026
 
-### Core question
+Speed-to-Power is a reproducible screening framework for evaluating the energy
+and grid-readiness of 100–500 MW U.S. data-center loads.
 
-Where can a 100–500 MW data center obtain reliable power fastest, at acceptable cost and regulatory risk?
+The project now has two layers:
 
-### What is working now
+1. **Regional V1:** PJM vs ERCOT vs MISO
+2. **Utility V2:** Dominion Energy Virginia vs Oncor Electric Delivery vs Commonwealth Edison
 
-- PJM / ERCOT / MISO evidence dataset
-- EIA June 2026 industrial electricity-price proxies
-- NERC 2026–2035 demand and 2029 reliability metrics
-- Current large-load process status
-- Transparent process/flexibility scoring rubric
-- Balanced, speed-first, cost-first, and reliability-first scenarios
-- 100–500 MW scenario controls
-- Annual electricity-cost proxy
-- Phased energization table
-- Streamlit dashboard
-- Source register
-- Working-paper draft
+## V2 research question
 
-### Default 300 MW scenario
+How do utility market structure, delivery tariffs, large-load contracts,
+collateral requirements, demand floors, and interconnection rules change the
+commercial path to power for a hyperscale data center?
 
-- Full load: 300 MW
-- Load factor: 90%
-- Annual energy: 2.365 TWh
-- Phases: 50 → 125 → 225 → 300 MW
+## Why V2 matters
 
-### Current evidence snapshot
+A regional electricity-price average is not enough for hyperscale siting.
 
-| Market | Price proxy | 2029 ARM | 2029 LOLH | 2026–35 demand CAGR |
-|---|---:|---:|---:|---:|
-| PJM | 9.31¢/kWh | 18.9% | 9.97 h/yr | 3.14% |
-| ERCOT | 6.58¢/kWh | 30.8% | 3.64 h/yr | 5.56% |
-| MISO | 10.65¢/kWh | 8.6% | 6.61 h/yr | 1.38% |
+A 300 MW project may face:
 
-**Important:** the price is a representative state industrial retail-price proxy, not a data-center tariff.
+- utility-specific delivery tariffs
+- 4CP transmission exposure
+- long-term take-or-pay style demand floors
+- collateral
+- transmission construction contributions
+- separate retail/wholesale energy procurement
+- project-specific interconnection studies
 
-### Run
+V2 exposes those differences rather than forcing them into one misleading
+$/MWh number.
+
+## 300 MW / 90% load-factor base case
+
+Annual energy requirement: **2.3652 TWh**.
+
+### Oncor Electric Delivery / ERCOT
+
+Using the published 2026 transmission-service base charges, August 2026 TCRF,
+a 90% 4CP exposure assumption, and the 2026 interim surcharge:
+
+- **Core delivery proxy: about $11.85M/year**
+- **About $5.01/MWh**
+
+This is delivery only. Retail energy supply, construction contributions,
+special facilities, taxes, and several riders are excluded.
+
+### Commonwealth Edison / PJM
+
+Using the published 2026 High Voltage >10 MW delivery components at a 300 MW
+billing demand:
+
+- **Core delivery proxy: about $14.32M/year**
+- **About $6.05/MWh**
+
+Published ADJ factors, retail energy supply, PJM capacity, construction, and
+other riders are excluded.
+
+### Dominion Energy Virginia / PJM
+
+Dominion's GS-5 structure is not a delivery-only tariff comparison. It is a
+large-load contractual framework effective January 1, 2027.
+
+For 300 MW:
+
+- **Gross collateral benchmark: $450M**
+- **Collateral after maximum 70% credit reduction: $135M**
+- **Minimum distribution demand: 255 MW**
+- **Minimum transmission demand: 255 MW**
+- **Minimum generation demand: 180 MW**
+- **Contract term: 14 years**
+- **Ramp period: up to 4 years with at least 20% annual ramp**
+
+These are contractual exposure metrics, not an annual electricity bill.
+
+## Major V2 source findings
+
+Virginia's SCC approved GS-5 for customers with at least 25 MW on a contiguous
+site and at least a 75% measured or expected load factor. The Commission also
+approved a framework for prospective direct assignment of direct-connect
+transmission facilities attributable to new or expanding large loads.
+
+Oncor's transmission-voltage retail-delivery tariff uses demand-based charges
+and an ERCOT 4CP-based TCRF. ERCOT's Batch Zero large-load process became
+effective in July 2026.
+
+ComEd's published delivery tariff includes explicit Extra Large Load and High
+Voltage classes. V2 uses the 2026 High Voltage >10 MW components for the
+hyperscale scenario.
+
+## Run the dashboard
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+python tests/smoke_test.py
+python tests/utility_v2_smoke_test.py
 streamlit run app.py
 ```
 
-### Repository structure
+## Repository structure
 
 ```text
-speed-to-power/
+.
 ├── app.py
 ├── README.md
-├── RUN.md
 ├── methodology.md
 ├── research_questions.md
-├── requirements.txt
 ├── analysis/
-│   └── results_v1.md
+│   ├── results_v1.md
+│   └── utility_v2_findings.md
 ├── config/
 │   ├── scenario_weights.json
 │   ├── scoring_rubric.md
@@ -69,21 +123,41 @@ speed-to-power/
 ├── data/
 │   ├── evidence_v1.csv
 │   ├── scenario_scores_v1.csv
-│   ├── annual_cost_proxy_300mw.csv
-│   ├── market_seed.csv
-│   ├── regulatory_seed.csv
+│   ├── utility_v2.csv
+│   ├── utility_rate_components_v2.csv
+│   ├── utility_scenario_outputs_v2.csv
+│   ├── utility_sources_v2.csv
 │   └── source_register.csv
 ├── paper/
 │   ├── draft_v1.md
-│   └── outline.md
-└── src/
-    ├── evidence_model.py
-    ├── scoring_engine.py
-    └── scenarios.py
+│   ├── outline.md
+│   └── v2_utility_layer.md
+├── src/
+│   ├── evidence_model.py
+│   ├── scoring_engine.py
+│   ├── scenarios.py
+│   └── utility_model_v2.py
+└── tests/
+    ├── smoke_test.py
+    └── utility_v2_smoke_test.py
 ```
 
-### Interpretation rule
+## Interpretation rule
 
-This is a **screening model**.
+This is a **screening and due-diligence model**.
 
-Do not translate an RTO/ISO score into a guaranteed energization date. The next layer must evaluate utility territory, transmission zone, point of interconnection, substation capacity, tariff, and network upgrades.
+It does not claim that a specific site can receive 100, 300, or 500 MW by a
+guaranteed date. A production siting decision still requires utility,
+transmission-zone, substation, point-of-interconnection, tariff, construction,
+and network-upgrade studies.
+
+## Primary-source trail
+
+See:
+
+- `data/source_register.csv`
+- `data/utility_sources_v2.csv`
+
+The project prioritizes primary material from EIA, NERC, FERC, ERCOT, PJM,
+Dominion Energy Virginia, the Virginia SCC, Oncor, ComEd, and the Illinois
+Commerce Commission.
