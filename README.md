@@ -94,6 +94,15 @@ ComEd's published delivery tariff includes explicit Extra Large Load and High
 Voltage classes. V2 uses the 2026 High Voltage >10 MW components for the
 hyperscale scenario.
 
+## Key files
+
+- `paper/draft_v2.md` — complete V2 working paper
+- `analysis/utility_v2_findings.md` — concise utility-level findings
+- `INTERVIEW_BRIEF.md` — 30-second and 60-second project explanations
+- `data/utility_sources_v2.csv` — primary-source audit trail
+- `src/utility_model_v2.py` — utility tariff and contractual-exposure model
+- `app.py` — interactive V1 + V2 dashboard
+
 ## Run the dashboard
 
 ```bash
