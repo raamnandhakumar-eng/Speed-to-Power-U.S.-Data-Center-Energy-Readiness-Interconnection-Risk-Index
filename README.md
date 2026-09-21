@@ -219,12 +219,12 @@ hyperscale scenario.
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-streamlit.txt
 python tests/smoke_test.py
 python tests/utility_v2_smoke_test.py
 python tests/nova_v3_smoke_test.py
 python tests/site_pathway_v4_smoke_test.py
-streamlit run app.py
+streamlit run streamlit_app.py
 ```
 
 ## Repository structure
@@ -298,3 +298,13 @@ See:
 The project prioritizes primary material from EIA, NERC, FERC, ERCOT, PJM,
 Dominion Energy Virginia, the Virginia SCC, Oncor, ComEd, and the Illinois
 Commerce Commission.
+
+
+## Deployment
+
+The repository supports two frontends:
+
+- **Vercel:** `app.py` is a FastAPI application with a top-level `app` entrypoint and browser-based V1–V4 dashboard.
+- **Local Streamlit:** `streamlit_app.py` preserves the full Streamlit analysis interface.
+
+Vercel installs `requirements.txt`. For the local Streamlit interface, install `requirements-streamlit.txt`.
