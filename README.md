@@ -2,17 +2,76 @@
 
 ## U.S. Data Center Energy Readiness & Interconnection Risk
 
-**Version:** Northern Virginia V3  
+**Version:** Northern Virginia V4  
 **Updated:** September 21, 2026
 
 Speed-to-Power is a reproducible screening framework for evaluating the energy
 and grid-readiness of 100–500 MW U.S. data-center loads.
 
-The project now has three analytical layers:
+The project now has four analytical layers:
 
 1. **Regional V1:** PJM vs ERCOT vs MISO
 2. **Utility V2:** Dominion Energy Virginia vs Oncor Electric Delivery vs Commonwealth Edison
 3. **Northern Virginia V3:** transmission projects, load-serving substations, and Dominion large-load queue mechanics
+4. **Candidate Pathways V4:** scenario-specific comparison of public campus precedents and future transmission corridors
+
+## V4 research question
+
+How can public transmission, queue, campus-load, and land-use evidence be used
+to compare development pathways for 100–500 MW data-center scenarios without
+claiming non-public grid capacity?
+
+## V4 structure
+
+V4 separates two questions that should not be blended:
+
+1. **Technical pathway evidence**
+   - documented MW
+   - number of delivery points
+   - direct transmission dependency
+   - schedule alignment
+   - limited bridging-power evidence
+   - source completeness
+
+2. **Land-use gate**
+   - Special Exception requirements
+   - grandfathering status
+   - legislative versus administrative processing
+   - current Loudoun policy timing
+
+The public campus precedents are:
+
+- **Campus A / Twin Creeks:** 300 MW, one delivery point
+- **Campus B / Sycolin Creek + Starlight:** 555 MW, two delivery points
+- **Campus C / Lunar + Apollo:** 517 MW, two delivery points
+
+The model also tracks BECO-Firehouse and Global Plaza as future corridor
+evidence, but leaves them unscored where site-specific load and delivery-point
+data are not public.
+
+### Technical Pathway Evidence Score
+
+For public campus precedents, V4 uses:
+
+- 30% documented load fit
+- 15% delivery-point fit
+- 25% transmission-development maturity
+- 20% schedule alignment
+- 5% bridging-power ratio
+- 5% evidence completeness
+
+The score is scenario-specific and is not a site recommendation.
+
+### Land-use timing
+
+Loudoun's March 2025 changes require Special Exception approval for data centers
+in several industrial districts, subject to applicable grandfathering rules.
+
+On September 15, 2026, the Board approved a plan to pause final votes on
+legislative data-center and substation applications for up to 12 months. As of
+September 21, 2026, the implementing resolution was scheduled for October 20,
+so V4 treats this as elevated entitlement-timing risk rather than a final
+parcel-specific denial.
 
 ## V3 research question
 
@@ -139,16 +198,21 @@ hyperscale scenario.
 
 ## Key files
 
+- `paper/draft_v4.md` — candidate-development-pathways V4 working paper
 - `paper/draft_v3.md` — Northern Virginia V3 working paper
 - `paper/draft_v2.md` — utility-level V2 working paper
+- `analysis/nova_v4_findings.md` — candidate-pathway findings
 - `analysis/nova_v3_findings.md` — Northern Virginia transmission findings
 - `analysis/utility_v2_findings.md` — utility-level V2 findings
 - `TECHNICAL_BRIEF.md` — concise technical summary, assumptions, findings, and limitations
 - `data/utility_sources_v2.csv`
+- `data/nova_sources_v3.csv`
+- `data/nova_sources_v4.csv`
 - `data/nova_sources_v3.csv` — primary-source audit trail
+- `src/site_pathway_v4.py` — scenario-specific candidate-pathway model
 - `src/nova_readiness_v3.py` — Northern Virginia transmission-development model
 - `src/utility_model_v2.py` — utility tariff and contractual-exposure model
-- `app.py` — interactive V1 + V2 dashboard
+- `app.py` — interactive V1–V4 dashboard
 
 ## Run the dashboard
 
@@ -159,6 +223,7 @@ pip install -r requirements.txt
 python tests/smoke_test.py
 python tests/utility_v2_smoke_test.py
 python tests/nova_v3_smoke_test.py
+python tests/site_pathway_v4_smoke_test.py
 streamlit run app.py
 ```
 
@@ -173,7 +238,8 @@ streamlit run app.py
 ├── analysis/
 │   ├── results_v1.md
 │   ├── utility_v2_findings.md
-│   └── nova_v3_findings.md
+│   ├── nova_v3_findings.md
+│   └── nova_v4_findings.md
 ├── config/
 │   ├── scenario_weights.json
 │   ├── scoring_rubric.md
@@ -189,22 +255,28 @@ streamlit run app.py
 │   ├── nova_load_nodes_v3.csv
 │   ├── nova_transmission_projects_v3.csv
 │   ├── nova_queue_rules_v3.csv
-│   └── nova_sources_v3.csv
+│   ├── nova_sources_v3.csv
+│   ├── nova_candidate_pathways_v4.csv
+│   ├── loudoun_landuse_v4.csv
+│   └── nova_sources_v4.csv
 ├── paper/
 │   ├── draft_v1.md
 │   ├── outline.md
 │   ├── v2_utility_layer.md
-│   └── draft_v3.md
+│   ├── draft_v3.md
+│   └── draft_v4.md
 ├── src/
 │   ├── evidence_model.py
 │   ├── scoring_engine.py
 │   ├── scenarios.py
 │   ├── utility_model_v2.py
-│   └── nova_readiness_v3.py
+│   ├── nova_readiness_v3.py
+│   └── site_pathway_v4.py
 └── tests/
     ├── smoke_test.py
     ├── utility_v2_smoke_test.py
-    └── nova_v3_smoke_test.py
+    ├── nova_v3_smoke_test.py
+    └── site_pathway_v4_smoke_test.py
 ```
 
 ## Interpretation rule
