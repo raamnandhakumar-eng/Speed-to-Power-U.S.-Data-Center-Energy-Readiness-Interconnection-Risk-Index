@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "",
+  "buildCommand": "mkdir -p dist && cp index.html dist/index.html",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/(.*)",
