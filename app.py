@@ -1,373 +1,90 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
-import streamlit as st
+from fastapi import FastAPI, Query
+from fastapi.responses import HTMLResponse
 
-from src.evidence_model import (
-    annual_cost_proxy_usd,
-    annual_energy_mwh,
-    load_evidence,
-    load_scenarios,
-    score_markets,
-)
+from src.evidence_model import load_evidence, load_scenarios, score_markets
+from src.nova_readiness_v3 import load_nodes, queue_scenario, verify_project_scores
+from src.site_pathway_v4 import required_delivery_points, score_pathways
 from src.utility_model_v2 import (
     Scenario,
     comed_high_voltage_core_delivery_proxy,
     dominion_gs5_obligations,
     oncor_transmission_core_delivery_proxy,
 )
-from src.nova_readiness_v3 import (
-    load_nodes,
-    load_projects,
-    queue_scenario,
-    verify_project_scores,
-)
-from src.site_pathway_v4 import (
-    required_delivery_points as v4_required_delivery_points,
-    score_pathways,
-)
 
 ROOT = Path(__file__).resolve().parent
 
-st.set_page_config(page_title="Speed-to-Power", layout="wide")
-st.title("Speed-to-Power")
-st.caption("U.S. Data Center Energy Readiness & Interconnection Risk")
-
-tab_v4, tab_v3, tab_v2, tab_v1, tab_method = st.tabs(
-    [
-        "Candidate Pathways V4",
-        "Northern Virginia V3",
-        "Utility V2",
-        "Regional V1",
-        "Methodology & Sources",
-    ]
+app = FastAPI(
+    title="Speed-to-Power",
+    description="U.S. Data Center Energy Readiness & Interconnection Risk",
+    version="4.0.0",
 )
 
-with tab_v4:
-    st.subheader("Northern Virginia candidate development pathways")
-    st.write(
-        "V4 compares public development precedents and future transmission corridors. "
-        "The technical score is calculated only where public sources document load, "
-        "delivery-point architecture, schedule, and a direct transmission dependency. "
-        "It does not identify an available parcel or unused grid capacity."
-    )
 
-    v4c1, v4c2 = st.columns(2)
-    v4_load = v4c1.slider(
-        "Scenario campus load (MW)",
-        100,
-        500,
-        300,
-        step=25,
-        key="v4_load",
-    )
-    v4_target_year = v4c2.slider(
-        "Target full service year",
-        2026,
-        2032,
-        2029,
-        key="v4_target_year",
-    )
+def _records(df: pd.DataFrame) -> list[dict[str, Any]]:
+    clean = df.copy()
+    clean = clean.astype(object).where(pd.notna(clean), None)
+    return clean.to_dict(orient="records")
 
-    scored_v4 = score_pathways(v4_load, v4_target_year)
-    scored_precedents = scored_v4[
-        scored_v4["technical_pathway_score"].notna()
-    ].sort_values("technical_pathway_score", ascending=False)
 
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Scenario load", f"{v4_load} MW")
-    m2.metric(
-        "Minimum delivery points",
-        v4_required_delivery_points(v4_load),
-    )
-    m3.metric("Target year", str(v4_target_year))
+@app.get("/api/health")
+def health() -> dict[str, str]:
+    return {"status": "ok", "version": "4.0.0"}
 
-    st.markdown("### Public campus precedents")
-    precedent_display = scored_precedents[
-        [
-            "pathway_name",
-            "documented_load_mw",
-            "documented_delivery_points",
-            "latest_target",
-            "direct_project_tdri",
-            "technical_pathway_score",
-            "land_use_status",
-        ]
-    ].rename(
-        columns={
-            "pathway_name": "Pathway",
-            "documented_load_mw": "Documented load (MW)",
-            "documented_delivery_points": "Delivery points",
-            "latest_target": "Latest filing-era target",
-            "direct_project_tdri": "Direct project TDRI",
-            "technical_pathway_score": "Technical pathway evidence score",
-            "land_use_status": "Parcel land-use status",
-        }
-    )
-    st.dataframe(
-        precedent_display.round(1),
-        use_container_width=True,
-        hide_index=True,
-    )
-    st.bar_chart(
-        scored_precedents.set_index("pathway_name")["technical_pathway_score"]
-    )
 
-    st.caption(
-        "The score is a scenario-fit measure for public precedents, not a recommendation "
-        "or a claim that these campuses are available to another customer."
+@app.get("/api/v4")
+def v4(
+    load_mw: int = Query(300, ge=100, le=500),
+    target_year: int = Query(2029, ge=2026, le=2032),
+) -> dict[str, Any]:
+    scored = score_pathways(load_mw, target_year)
+    precedents = scored[scored["technical_pathway_score"].notna()].sort_values(
+        "technical_pathway_score", ascending=False
     )
-
-    st.markdown("### Scenario decomposition")
-    score_components = scored_precedents[
-        [
-            "pathway_name",
-            "load_fit_score",
-            "delivery_point_fit_score",
-            "direct_project_tdri",
-            "schedule_alignment_score",
-            "bridge_ratio_score",
-            "evidence_completeness_score",
-        ]
-    ].rename(
-        columns={
-            "pathway_name": "Pathway",
-            "load_fit_score": "Load fit",
-            "delivery_point_fit_score": "DP fit",
-            "direct_project_tdri": "Transmission maturity",
-            "schedule_alignment_score": "Schedule alignment",
-            "bridge_ratio_score": "Bridge ratio",
-            "evidence_completeness_score": "Evidence completeness",
-        }
-    )
-    st.dataframe(score_components.round(1), use_container_width=True, hide_index=True)
-
-    st.markdown("### Future corridor evidence")
-    corridor_display = scored_v4[
-        scored_v4["technical_pathway_score"].isna()
-    ][
-        [
-            "pathway_name",
-            "area_context",
-            "serving_substations",
-            "latest_target",
-            "direct_project_tdri",
-            "land_use_note",
-        ]
-    ].rename(
-        columns={
-            "pathway_name": "Corridor",
-            "area_context": "Area",
-            "serving_substations": "Substation evidence",
-            "latest_target": "Target",
-            "direct_project_tdri": "Transmission maturity",
-            "land_use_note": "Why no site score",
-        }
-    )
-    st.dataframe(corridor_display, use_container_width=True, hide_index=True)
-
-    st.markdown("### Land-use gate")
+    corridors = scored[scored["technical_pathway_score"].isna()]
     landuse = pd.read_csv(ROOT / "data" / "loudoun_landuse_v4.csv")
-    st.dataframe(
-        landuse[
-            ["topic", "status_or_rule", "effective_or_as_of", "planning_implication"]
-        ].rename(
-            columns={
-                "topic": "Topic",
-                "status_or_rule": "Current rule / status",
-                "effective_or_as_of": "Effective / as of",
-                "planning_implication": "Planning implication",
-            }
-        ),
-        use_container_width=True,
-        hide_index=True,
-    )
-    st.warning(
-        "As of September 21, 2026, Loudoun's Board had approved a plan to pause "
-        "final votes on legislative data-center and substation applications, but the "
-        "implementing resolution was scheduled for October 20, 2026. V4 treats this "
-        "as elevated entitlement-timing risk rather than a parcel-specific denial."
-    )
+    return {
+        "scenario": {
+            "load_mw": load_mw,
+            "target_year": target_year,
+            "minimum_delivery_points": required_delivery_points(load_mw),
+        },
+        "precedents": _records(precedents),
+        "corridors": _records(corridors),
+        "land_use": _records(landuse),
+    }
 
-with tab_v3:
-    st.subheader("Northern Virginia transmission development readiness")
-    st.write(
-        "V3 moves from utility-level economics to documented transmission projects, "
-        "delivery-point queue rules, and load-serving substations. The index measures "
-        "development maturity. It does not estimate spare substation capacity or guarantee "
-        "an energization date."
-    )
 
-    v3_load = st.slider(
-        "Hypothetical campus load (MW)",
-        100,
-        500,
-        300,
-        step=25,
-        key="v3_load",
-    )
-    q = queue_scenario(v3_load)
-
-    q1, q2, q3, q4 = st.columns(4)
-    q1.metric("Scenario load", f"{v3_load} MW")
-    q2.metric("Minimum delivery points", q["minimum_delivery_points"])
-    q3.metric("DP request cap", f"{q['delivery_point_cap_mw']:.0f} MW")
-    q4.metric("Formal queue threshold", "~100 MW")
-
-    if v3_load > q["delivery_point_cap_mw"]:
-        st.info(
-            f"A {v3_load} MW campus requires at least "
-            f"{q['minimum_delivery_points']} delivery-point requests under the "
-            "public 300 MW cap. Campus-style requests may be aligned and staged "
-            "based on demonstrated load ramp-up."
-        )
-
-    st.markdown("### Queue pressure")
-    queue_df = pd.read_csv(ROOT / "data" / "nova_queue_rules_v3.csv")
-    queue_metrics = pd.DataFrame(
-        [
-            ["Requests with projected connection dates", "25,000 MW"],
-            ["Additional requests in study batches", "45,000 MW"],
-            ["Total advancing through queue", "70,000 MW"],
-            ["Dominion Zone peak cited in filing", "24,678 MW"],
-            ["New request pace", "~10 requests/month"],
-            ["Associated new requested load", "~2,000–3,000 MW/month"],
-        ],
-        columns=["Public queue metric", "Value"],
-    )
-    st.dataframe(queue_metrics, use_container_width=True, hide_index=True)
-    st.caption(
-        "Queue MW are requested load, not a forecast of realized demand or available capacity."
-    )
-
-    st.markdown("### Load-serving substation evidence")
-    nodes = load_nodes()
-    node_display = nodes[
-        [
-            "campus",
-            "substation",
-            "dp_requested_load_mw",
-            "target_in_service",
-            "bridging_power",
-            "bridge_source",
-            "bridge_capacity_mva",
-            "status_note",
-        ]
-    ].rename(
-        columns={
-            "campus": "Campus",
-            "substation": "Substation",
-            "dp_requested_load_mw": "Requested load (MW)",
-            "target_in_service": "Filing-era target in service",
-            "bridging_power": "Bridging power",
-            "bridge_source": "Bridge source",
-            "bridge_capacity_mva": "Bridge capacity (MVA)",
-            "status_note": "Evidence note",
-        }
-    )
-    st.dataframe(node_display, use_container_width=True, hide_index=True)
-    st.metric(
-        "Total requested ten-year load in the five-node filing",
-        f"{nodes['dp_requested_load_mw'].sum():,.0f} MW",
-    )
-
-    st.markdown("### Transmission Development Readiness Index")
+@app.get("/api/v3")
+def v3(load_mw: int = Query(300, ge=100, le=500)) -> dict[str, Any]:
     projects = verify_project_scores().sort_values("tdri_score", ascending=False)
-    project_display = projects[
-        [
-            "project",
-            "voltage_kv",
-            "development_stage",
-            "regulatory_status",
-            "target_or_actual_in_service",
-            "tdri_score",
-        ]
-    ].rename(
-        columns={
-            "project": "Project",
-            "voltage_kv": "Voltage",
-            "development_stage": "Development stage",
-            "regulatory_status": "Regulatory status",
-            "target_or_actual_in_service": "Target / actual in service",
-            "tdri_score": "TDRI",
-        }
-    )
-    st.dataframe(project_display, use_container_width=True, hide_index=True)
-    st.bar_chart(projects.set_index("project")["tdri_score"])
+    nodes = load_nodes()
+    return {
+        "queue": queue_scenario(load_mw),
+        "queue_context": {
+            "requests_with_connection_dates_mw": 25000,
+            "requests_in_study_batches_mw": 45000,
+            "total_advancing_mw": 70000,
+            "dominion_zone_peak_mw": 24678,
+        },
+        "nodes": _records(nodes),
+        "projects": _records(projects),
+    }
 
-    st.caption(
-        "TDRI = 40% development stage + 30% regulatory maturity + "
-        "15% schedule specificity + 15% explicit load linkage. "
-        "It is a documented-maturity index, not a capacity score."
-    )
 
-    st.markdown("### Queue advancement requirements")
-    advancement = pd.DataFrame(
-        [
-            ["Project Initiation", "Load characteristics, voltage/timing requirements, site information, preliminary engineering"],
-            ["Initial viability", "Sufficient land, constructible interconnection routes, acceptable environmental conditions"],
-            ["Project Feasibility", "Zoning conformance letter and 30% engineering site plan"],
-            ["Project Development", "Required permits, 100% grading plan, construction one-line diagram"],
-            ["Project Execution", "Final design, construction, energization, as-built and operating documentation"],
-        ],
-        columns=["Stage", "Publicly documented requirement"],
-    )
-    st.dataframe(advancement, use_container_width=True, hide_index=True)
-
-    st.markdown("### Geographic evidence")
-    st.write(
-        "V3 uses Dominion's published project maps as the authoritative geographic layer. "
-        "Exact asset coordinates are not reconstructed from visual maps because that would "
-        "create false precision."
-    )
-    st.link_button(
-        "Open Dominion Loudoun reliability project map",
-        "https://www.dominionenergy.com/-/media/content/about/power-line-projects/nova/pdfs/maps/loudoun-reliability-projects-overview-january-2025-open-house.pdf",
-    )
-
-with tab_v2:
-    st.subheader("Utility-level due diligence")
-    st.write(
-        "V2 compares Dominion Energy Virginia, Oncor Electric Delivery, and "
-        "Commonwealth Edison. It keeps delivery charges, energy procurement, "
-        "collateral, and contractual obligations separate because the utilities "
-        "operate under different market structures."
-    )
-
-    c1, c2, c3, c4 = st.columns(4)
-    load_mw = c1.slider("Facility load (MW)", 100, 500, 300, step=25, key="v2_load")
-    load_factor = c2.slider(
-        "Load factor", 0.75, 1.00, 0.90, step=0.01, key="v2_lf"
-    )
-    four_cp_factor = c3.slider(
-        "Oncor 4CP exposure factor",
-        0.40,
-        1.00,
-        0.90,
-        step=0.05,
-        key="v2_4cp",
-        help="Assumed ERCOT 4CP demand as a fraction of facility maximum demand.",
-    )
-    credit_reduction = c4.slider(
-        "Dominion credit reduction",
-        0,
-        70,
-        0,
-        step=5,
-        key="v2_credit",
-        help="GS-5 collateral may be reduced by up to 70% based on established credit.",
-    )
-
-    comed_demand_factor = st.slider(
-        "ComEd billing-demand factor",
-        0.75,
-        1.00,
-        1.00,
-        step=0.05,
-        key="v2_comed_demand",
-        help="Assumed billed maximum demand as a fraction of facility maximum demand.",
-    )
-
+@app.get("/api/v2")
+def v2(
+    load_mw: int = Query(300, ge=100, le=500),
+    load_factor: float = Query(0.90, ge=0.50, le=1.00),
+    four_cp_factor: float = Query(0.90, ge=0.40, le=1.00),
+    comed_demand_factor: float = Query(1.00, ge=0.50, le=1.00),
+    dominion_credit_reduction_pct: float = Query(0.0, ge=0.0, le=70.0),
+) -> dict[str, Any]:
     scenario = Scenario(load_mw=load_mw, load_factor=load_factor)
     oncor = oncor_transmission_core_delivery_proxy(
         scenario, four_cp_factor=four_cp_factor
@@ -376,221 +93,160 @@ with tab_v2:
         scenario, billing_demand_factor=comed_demand_factor
     )
     dominion = dominion_gs5_obligations(
-        scenario, credit_reduction_pct=credit_reduction
+        scenario, credit_reduction_pct=dominion_credit_reduction_pct
     )
+    return {
+        "scenario": {
+            "load_mw": load_mw,
+            "load_factor": load_factor,
+            "annual_mwh": scenario.annual_mwh,
+        },
+        "oncor": oncor,
+        "comed": comed,
+        "dominion": dominion,
+    }
 
-    st.markdown("### Scenario")
-    s1, s2, s3 = st.columns(3)
-    s1.metric("Full load", f"{load_mw} MW")
-    s2.metric("Annual energy", f"{scenario.annual_mwh / 1_000_000:.3f} TWh")
-    s3.metric("Annual load factor", f"{load_factor:.0%}")
 
-    st.markdown("### Core outputs")
-    o1, o2, o3 = st.columns(3)
-
-    with o1:
-        st.markdown("#### Oncor / ERCOT")
-        st.metric("Core delivery proxy", f"${oncor['annual_usd'] / 1e6:,.2f}M/yr")
-        st.metric("Core delivery proxy", f"${oncor['usd_per_mwh']:,.2f}/MWh")
-        st.caption(
-            "Transmission-voltage delivery only. Energy supply, construction, "
-            "taxes, and several riders are excluded."
-        )
-
-    with o2:
-        st.markdown("#### ComEd / PJM")
-        st.metric("Core delivery proxy", f"${comed['annual_usd'] / 1e6:,.2f}M/yr")
-        st.metric("Core delivery proxy", f"${comed['usd_per_mwh']:,.2f}/MWh")
-        st.caption(
-            "High Voltage >10 MW delivery proxy. Published ADJ factors, energy "
-            "supply, PJM capacity, construction, and other riders are excluded."
-        )
-
-    with o3:
-        st.markdown("#### Dominion / PJM")
-        st.metric(
-            "GS-5 collateral exposure",
-            f"${dominion['net_collateral_usd'] / 1e6:,.0f}M",
-        )
-        st.metric(
-            "Transmission demand floor",
-            f"{dominion['minimum_transmission_demand_mw']:,.0f} MW",
-        )
-        st.caption(
-            "This is contractual exposure, not an annual electricity bill. "
-            "GS-5 takes effect January 1, 2027."
-        )
-
-    st.info(
-        "Do not compare Dominion collateral directly with Oncor or ComEd annual "
-        "delivery charges. V2 intentionally separates these categories."
-    )
-
-    st.markdown("### Dominion GS-5 obligations")
-    dominion_table = pd.DataFrame(
-        [
-            ["Contract term", "14 years"],
-            ["Maximum ramp period", "4 years"],
-            ["Minimum annual ramp", "20%"],
-            [
-                "Gross collateral benchmark",
-                f"${dominion['gross_collateral_usd'] / 1e6:,.0f}M",
-            ],
-            [
-                "Net collateral at selected credit reduction",
-                f"${dominion['net_collateral_usd'] / 1e6:,.0f}M",
-            ],
-            [
-                "Minimum distribution demand",
-                f"{dominion['minimum_distribution_demand_mw']:,.1f} MW",
-            ],
-            [
-                "Minimum transmission demand",
-                f"{dominion['minimum_transmission_demand_mw']:,.1f} MW",
-            ],
-            [
-                "Minimum generation demand",
-                f"{dominion['minimum_generation_demand_mw']:,.1f} MW",
-            ],
-        ],
-        columns=["GS-5 term", "Scenario value"],
-    )
-    st.dataframe(dominion_table, use_container_width=True, hide_index=True)
-
-    st.markdown("### Utility structure")
-    utility_df = pd.read_csv(ROOT / "data" / "utility_v2.csv")
-    utility_display = utility_df[
-        [
-            "utility",
-            "regional_market",
-            "market_structure",
-            "large_load_definition",
-            "connection_process_status",
-            "demand_flexibility_status",
-        ]
-    ].rename(
-        columns={
-            "utility": "Utility",
-            "regional_market": "Market",
-            "market_structure": "Market structure",
-            "large_load_definition": "Large-load treatment",
-            "connection_process_status": "Connection process",
-            "demand_flexibility_status": "Flexibility status",
-        }
-    )
-    st.dataframe(utility_display, use_container_width=True, hide_index=True)
-
-    st.markdown("### What the V2 proxies include")
-    rate_df = pd.read_csv(ROOT / "data" / "utility_rate_components_v2.csv")
-    st.dataframe(rate_df, use_container_width=True, hide_index=True)
-
-with tab_v1:
-    st.subheader("Regional market screening")
-
-    df = load_evidence()
+@app.get("/api/v1")
+def v1(profile: str = "balanced") -> dict[str, Any]:
     scenarios = load_scenarios()
-
-    c1, c2, c3 = st.columns(3)
-    load_mw_v1 = c1.slider("Full load (MW)", 100, 500, 300, step=25, key="v1_load")
-    target_year = c2.slider(
-        "Target full energization year", 2027, 2035, 2029, key="v1_year"
-    )
-    load_factor_v1 = c3.slider(
-        "Load factor", 0.50, 1.00, 0.90, step=0.01, key="v1_lf"
-    )
-
-    scenario_name = st.selectbox(
-        "Decision profile",
-        list(scenarios.keys()),
-        format_func=lambda x: x.replace("_", " ").title(),
-    )
-
-    weights = scenarios[scenario_name]
-    scored = score_markets(df, weights).sort_values(
+    if profile not in scenarios:
+        profile = "balanced"
+    scored = score_markets(load_evidence(), scenarios[profile]).sort_values(
         "screening_score", ascending=False
     )
+    return {
+        "profile": profile,
+        "weights": scenarios[profile],
+        "markets": _records(scored),
+    }
 
-    st.warning(
-        "V1 is a comparative RTO screening model. It does not establish "
-        "site-level transmission availability or a guaranteed energization date."
-    )
 
-    result = scored[
-        [
-            "market",
-            "screening_score",
-            "resource_adequacy_score",
-            "cost_score",
-            "growth_pressure_score",
-            "large_load_process_maturity_score",
-            "flexibility_maturity_score",
-        ]
-    ].rename(
-        columns={
-            "market": "Market",
-            "screening_score": "Screening score",
-            "resource_adequacy_score": "Resource adequacy",
-            "cost_score": "Cost proxy",
-            "growth_pressure_score": "Growth pressure",
-            "large_load_process_maturity_score": "Process maturity",
-            "flexibility_maturity_score": "Flexibility maturity",
-        }
-    )
-    st.dataframe(result.round(1), use_container_width=True, hide_index=True)
-    st.bar_chart(scored.set_index("market")["screening_score"])
+HOME_HTML = r"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Speed-to-Power</title>
+<style>
+:root{--bg:#07101d;--panel:#0d1a2b;--panel2:#102238;--text:#e8eef7;--muted:#9eb0c5;--line:#20354e;--accent:#67b7ff;--good:#7ee0a3;--warn:#ffd479}
+*{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#07101d,#091625 45%,#07101d);color:var(--text);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{max-width:1180px;margin:auto;padding:28px 20px 70px}.hero{padding:30px 0 20px}.kicker{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+h1{font-size:clamp(34px,6vw,66px);line-height:1.02;margin:8px 0 14px;letter-spacing:-.04em}h2{font-size:26px;margin:0 0 14px}h3{font-size:17px;margin:0 0 10px}.lede{max-width:820px;color:var(--muted);font-size:18px}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0}.nav a{color:var(--text);text-decoration:none;border:1px solid var(--line);padding:8px 12px;border-radius:999px;background:#0b1726}
+.section{margin-top:28px;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(13,26,43,.94);box-shadow:0 16px 48px rgba(0,0,0,.18)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px}.metric{font-size:28px;font-weight:800;letter-spacing:-.03em}.label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:14px 0 18px}.control label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}.control input,.control select{width:100%;background:#07111f;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px 8px;vertical-align:top}th{color:var(--muted);font-weight:600}
+.bar{height:8px;background:#07111f;border-radius:999px;overflow:hidden;margin-top:6px}.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--good))}
+.note{color:var(--muted);font-size:13px;margin-top:10px}.warning{padding:12px 14px;border-left:3px solid var(--warn);background:#2a2315;color:#f9e9bd;border-radius:8px;margin-top:14px}
+.footer{color:var(--muted);font-size:12px;margin-top:28px}.pill{display:inline-block;border:1px solid var(--line);padding:4px 8px;border-radius:999px;color:var(--muted);font-size:12px}
+@media(max-width:850px){.grid,.grid4,.controls{grid-template-columns:1fr}.section{padding:18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">Energy infrastructure research</div>
+    <h1>Speed-to-Power</h1>
+    <div class="lede">A multi-layer framework for screening large-load energy readiness, utility economics, transmission development, and Northern Virginia candidate pathways.</div>
+    <div class="nav">
+      <a href="#v4">Candidate Pathways V4</a><a href="#v3">Northern Virginia V3</a><a href="#v2">Utility V2</a><a href="#v1">Regional V1</a>
+    </div>
+  </div>
 
-    annual_mwh_v1 = annual_energy_mwh(load_mw_v1, load_factor_v1)
-    cost_rows = []
-    for _, row in scored.iterrows():
-        annual_cost = annual_cost_proxy_usd(
-            load_mw_v1,
-            load_factor_v1,
-            row["industrial_price_cents_per_kwh"],
-        )
-        cost_rows.append(
-            {
-                "Market": row["market"],
-                "Price proxy state": row["representative_state"],
-                "Annual energy (TWh)": annual_mwh_v1 / 1_000_000,
-                "Industrial price proxy (¢/kWh)": row[
-                    "industrial_price_cents_per_kwh"
-                ],
-                "Annual electricity-cost proxy ($M)": annual_cost / 1_000_000,
-            }
-        )
-    st.dataframe(
-        pd.DataFrame(cost_rows).round(2),
-        use_container_width=True,
-        hide_index=True,
-    )
+  <section class="section" id="v4">
+    <span class="pill">V4</span><h2>Candidate development pathways</h2>
+    <div class="controls">
+      <div class="control"><label>Scenario campus load (MW)</label><input id="v4load" type="range" min="100" max="500" step="25" value="300"><div id="v4loadval">300 MW</div></div>
+      <div class="control"><label>Target full service year</label><select id="v4year"><option >2026</option><option >2027</option><option >2028</option><option selected>2029</option><option >2030</option><option >2031</option><option >2032</option></select></div>
+      <div class="card"><div class="label">Minimum delivery points</div><div class="metric" id="v4dp">1</div></div>
+    </div>
+    <div id="v4cards" class="grid"></div>
+    <div class="warning">Technical pathway evidence is not spare substation capacity, parcel availability, or a guaranteed energization date. Land-use entitlement is a separate gate.</div>
+    <h3 style="margin-top:20px">Future corridor evidence</h3><div id="v4corridors"></div>
+  </section>
 
-with tab_method:
-    st.subheader("Methodology")
-    st.markdown(
-        """
-**V1** answers: which regional market warrants deeper diligence?
+  <section class="section" id="v3">
+    <span class="pill">V3</span><h2>Northern Virginia transmission development</h2>
+    <div id="v3metrics" class="grid4"></div>
+    <h3 style="margin-top:20px">Transmission Development Readiness Index</h3>
+    <div id="v3projects"></div>
+  </section>
 
-**V2** answers: what do the utility tariff, market structure, and large-load
-contract terms imply before a site-specific transmission study?
+  <section class="section" id="v2">
+    <span class="pill">V2</span><h2>Utility-level economics</h2>
+    <div class="controls">
+      <div class="control"><label>Facility load (MW)</label><input id="v2load" type="range" min="100" max="500" step="25" value="300"><div id="v2loadval">300 MW</div></div>
+      <div class="control"><label>Load factor</label><input id="v2lf" type="range" min="0.75" max="1" step="0.01" value="0.90"><div id="v2lfval">90%</div></div>
+      <div class="control"><label>Oncor 4CP exposure</label><input id="v24cp" type="range" min="0.40" max="1" step="0.05" value="0.90"><div id="v24cpval">90%</div></div>
+    </div>
+    <div id="v2cards" class="grid"></div>
+    <div class="note">Oncor and ComEd figures are core delivery proxies. Dominion displays GS-5 contractual exposure rather than an equivalent annual delivery bill.</div>
+  </section>
 
-The next layer must be a candidate **transmission zone / substation / point of
-interconnection**. No public RTO or utility-level score can replace that study.
+  <section class="section" id="v1">
+    <span class="pill">V1</span><h2>Regional market screening</h2>
+    <div class="control" style="max-width:340px"><label>Decision profile</label><select id="v1profile"><option>balanced</option><option>speed_first</option><option>cost_first</option><option>reliability_first</option></select></div>
+    <div id="v1markets"></div>
+  </section>
 
-### V2 guardrails
+  <div class="footer">Source-backed screening model. Public evidence is kept separate from non-public capacity and project-specific engineering conclusions.</div>
+</div>
+<script>
+const fmtM=n=>'$'+(n/1e6).toFixed(2)+'M';
+const pct=n=>Math.round(n*100)+'%';
+const num=n=>Number(n).toLocaleString(undefined,{maximumFractionDigits:1});
 
-- Oncor and ComEd outputs are **core delivery proxies**, not complete bills.
-- Dominion GS-5 outputs are **contractual exposure metrics**, not annual energy costs.
-- Oncor 4CP exposure is an explicit adjustable assumption.
-- ComEd's published `ADJ` factors are excluded from the proxy.
-- Project-specific construction and network-upgrade costs are excluded.
-- Energy procurement is outside the Oncor and ComEd delivery proxies.
-"""
-    )
+async function loadV4(){
+  const load=document.getElementById('v4load').value, year=document.getElementById('v4year').value;
+  document.getElementById('v4loadval').textContent=load+' MW';
+  const d=await fetch('/api/v4?load_mw='+load+'&target_year='+year).then(r=>r.json());
+  document.getElementById('v4dp').textContent=d.scenario.minimum_delivery_points;
+  document.getElementById('v4cards').innerHTML=d.precedents.map(x=>`
+    <div class="card"><div class="label">${x.pathway_name}</div><div class="metric">${num(x.technical_pathway_score)}</div>
+    <div class="bar"><span style="width:${x.technical_pathway_score}%"></span></div>
+    <div class="note">${num(x.documented_load_mw)} MW documented · ${x.documented_delivery_points} DP · target ${x.latest_target}</div></div>`).join('');
+  document.getElementById('v4corridors').innerHTML='<table><tr><th>Corridor</th><th>Area</th><th>Target</th><th>TDRI</th></tr>'+
+    d.corridors.map(x=>`<tr><td>${x.pathway_name}</td><td>${x.area_context}</td><td>${x.latest_target||'—'}</td><td>${x.direct_project_tdri||'—'}</td></tr>`).join('')+'</table>';
+}
+async function loadV3(){
+  const d=await fetch('/api/v3?load_mw=300').then(r=>r.json());
+  const q=d.queue_context;
+  document.getElementById('v3metrics').innerHTML=[
+    ['Queue with dates',num(q.requests_with_connection_dates_mw)+' MW'],
+    ['In study batches',num(q.requests_in_study_batches_mw)+' MW'],
+    ['Total advancing',num(q.total_advancing_mw)+' MW'],
+    ['Zone peak cited',num(q.dominion_zone_peak_mw)+' MW']
+  ].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="metric">${x[1]}</div></div>`).join('');
+  document.getElementById('v3projects').innerHTML='<table><tr><th>Project</th><th>Voltage</th><th>Stage</th><th>TDRI</th></tr>'+
+    d.projects.map(x=>`<tr><td>${x.project}</td><td>${x.voltage_kv}</td><td>${x.development_stage}</td><td>${x.tdri_score}</td></tr>`).join('')+'</table>';
+}
+async function loadV2(){
+  const load=document.getElementById('v2load').value, lf=document.getElementById('v2lf').value, cp=document.getElementById('v24cp').value;
+  document.getElementById('v2loadval').textContent=load+' MW'; document.getElementById('v2lfval').textContent=pct(lf); document.getElementById('v24cpval').textContent=pct(cp);
+  const d=await fetch('/api/v2?load_mw='+load+'&load_factor='+lf+'&four_cp_factor='+cp).then(r=>r.json());
+  document.getElementById('v2cards').innerHTML=`
+    <div class="card"><div class="label">Oncor / ERCOT</div><div class="metric">${fmtM(d.oncor.annual_usd)}/yr</div><div class="note">Core delivery proxy · $${d.oncor.usd_per_mwh.toFixed(2)}/MWh</div></div>
+    <div class="card"><div class="label">ComEd / PJM</div><div class="metric">${fmtM(d.comed.annual_usd)}/yr</div><div class="note">Core delivery proxy · $${d.comed.usd_per_mwh.toFixed(2)}/MWh</div></div>
+    <div class="card"><div class="label">Dominion / PJM</div><div class="metric">${fmtM(d.dominion.net_collateral_usd)}</div><div class="note">GS-5 collateral exposure · ${num(d.dominion.minimum_transmission_demand_mw)} MW transmission floor</div></div>`;
+}
+async function loadV1(){
+  const p=document.getElementById('v1profile').value;
+  const d=await fetch('/api/v1?profile='+p).then(r=>r.json());
+  document.getElementById('v1markets').innerHTML='<table><tr><th>Market</th><th>Score</th><th>Resource adequacy</th><th>Cost</th><th>Process maturity</th></tr>'+
+    d.markets.map(x=>`<tr><td>${x.market}</td><td>${x.screening_score}</td><td>${x.resource_adequacy_score.toFixed(1)}</td><td>${x.cost_score.toFixed(1)}</td><td>${x.large_load_process_maturity_score}</td></tr>`).join('')+'</table>';
+}
+['v4load','v4year'].forEach(id=>document.getElementById(id).addEventListener('input',loadV4));
+['v2load','v2lf','v24cp'].forEach(id=>document.getElementById(id).addEventListener('input',loadV2));
+document.getElementById('v1profile').addEventListener('change',loadV1);
+Promise.all([loadV4(),loadV3(),loadV2(),loadV1()]);
+</script>
+</body>
+</html>"""
 
-    st.markdown("### V2 primary sources")
-    sources_v2 = pd.read_csv(ROOT / "data" / "utility_sources_v2.csv")
-    st.dataframe(sources_v2, use_container_width=True, hide_index=True)
 
-    st.markdown("### V1 primary sources")
-    sources_v1 = pd.read_csv(ROOT / "data" / "source_register.csv")
-    st.dataframe(sources_v1, use_container_width=True, hide_index=True)
+@app.get("/", response_class=HTMLResponse)
+def home() -> str:
+    return HOME_HTML
