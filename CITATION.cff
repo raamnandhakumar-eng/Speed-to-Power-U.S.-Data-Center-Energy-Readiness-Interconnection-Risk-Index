@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this project, please cite it as below."
+title: "Speed-to-Power: U.S. Data Center Energy Readiness & Interconnection Risk"
+type: software
+authors:
+  - family-names: "Nandhakumar"
+    given-names: "Raam"
+version: "2.0.0"
+date-released: "2026-09-21"
+url: "https://github.com/raamnandhakumar-eng/Speed-to-Power-U.S.-Data-Center-Energy-Readiness-Interconnection-Risk-Index"
+repository-code: "https://github.com/raamnandhakumar-eng/Speed-to-Power-U.S.-Data-Center-Energy-Readiness-Interconnection-Risk-Index"
+keywords:
+  - data centers
+  - power systems
+  - interconnection
+  - energy strategy
+  - utility tariffs
+  - PJM
+  - ERCOT
+  - MISO
